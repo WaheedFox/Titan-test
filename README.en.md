@@ -308,6 +308,12 @@ Router supports: `on()`, `command()`, `callback()`.
 
 Router does **not** support: `middleware()` or nested `include()`.
 
+`bot.include(router)` performs a preflight pass over all router registrations
+and checks command and `callback_data` conflicts before changing bot state. If
+validation or conflict checks fail, that include attempt does not leave partial
+state caused by the failure. This is preflight protection before mutation, not
+a guarantee of full atomicity.
+
 ---
 
 ## Aliases
@@ -381,30 +387,6 @@ Both entrypoints execute the same internal logic.
 ---
 
 ### Documented Issues (incorrect runtime behavior)
-
-#### `bot.include()` — partial state on conflict
-
-If a `Router` contains both event handlers and a command that conflicts with an already-registered command, `bot.include()` adds the event handlers first and then raises `TitanError`. The mutation is not rolled back.
-
-```python
-@bot.command("start")
-async def existing(ctx): ...
-
-router = Router()
-
-@router.on("message")
-async def handler(ctx): ...  # gets added to the bot
-
-@router.command("start")
-async def conflict(ctx): ...  # causes TitanError
-
-bot.include(router)
-# TitanError is raised — but handler("message") was already added
-```
-
-**How to handle it:** Check for conflicts before calling `include()`. If the error occurs, reinitialize the bot rather than continuing from the partial state.
-
----
 
 #### `bot.callback("")` — never fires
 

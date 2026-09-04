@@ -302,6 +302,11 @@ Router يدعم: `on()`، `command()`، `callback()`.
 
 Router لا يدعم: `middleware()` أو `include()` المتداخل.
 
+`bot.include(router)` يجري preflight لجميع تسجيلات الـ`Router` ويتحقق من
+تعارضات الأوامر و`callback_data` قبل تغيير حالة البوت. إذا فشل التحقق أو وقع
+تعارض، فلا يترك استدعاء `include()` حالة جزئية ناتجة عن ذلك الفشل. هذا ضمان
+للفحص التمهيدي قبل التغيير، وليس ضمانًا لـ full atomicity.
+
 ---
 
 ## الأسماء البديلة (Aliases)
@@ -375,30 +380,6 @@ asyncio.run(bot.run_async())
 ---
 
 ### مشاكل موثَّقة (سلوك غير صحيح)
-
-#### `bot.include()` — حالة جزئية عند التعارض
-
-إذا احتوى الـ `Router` على handlers وأمر يتعارض مع أمر مسجَّل مسبقاً، فإن `bot.include()` تُضيف الـ handlers أولاً ثم تُرمى `TitanError`. الـ mutation لا تُعكس.
-
-```python
-@bot.command("start")
-async def existing(ctx): ...
-
-router = Router()
-
-@router.on("message")
-async def handler(ctx): ...  # يُضاف للبوت
-
-@router.command("start")
-async def conflict(ctx): ...  # يُسبب TitanError
-
-bot.include(router)
-# TitanError مُرماة — لكن handler("message") أُضيف بالفعل
-```
-
-**التعامل معه:** تحقق من التعارضات قبل استدعاء `include()`. إذا وقع الخطأ، أعد تهيئة البوت بدلاً من المتابعة.
-
----
 
 #### `bot.callback("")` — لا يُنفَّذ أبداً
 

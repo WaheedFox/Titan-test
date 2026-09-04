@@ -8,6 +8,57 @@ All notable changes to titan-framework are documented here.
 
 _No unreleased changes._
 
+## [1.0.0b2] - 2026-09-04
+
+### Bug Fixes
+
+- Inline buttons now require exactly one supported action:
+  `callback_data` or `url`. Creating a button with neither or both now raises
+  `TitanError` before a payload is built or a Telegram request is sent.
+- Async `on_offset` callbacks are rejected with `TitanError` before polling
+  starts. The lint rule remains as defensive validation for invalid internal
+  state.
+- The error-handler registration contract is now explicit and tested:
+  each bot has one slot, and the last handler replaces the previous one
+  without a warning or exception.
+- Unhandled errors and errors raised by an error handler are logged through the
+  `titan` logger with their tracebacks instead of being printed to stdout.
+- **B2-008 — `bot.include()` preflight:** `bot.include()` now validates all
+  router registrations and checks command and callback conflicts before
+  mutating bot state. Validation or conflict failures no longer leave partial
+  state from that include attempt. This is preflight protection before
+  mutation, not a guarantee of full atomicity.
+
+### Improvements
+
+- Polling now has explicit per-run lifecycle ownership for chat workers and
+  direct update-handler tasks.
+- Polling shutdown now drains accepted chat updates, gives accepted handler
+  tasks a bounded opportunity to finish, cancels tasks that remain pending,
+  observes task results and exceptions, and closes the Telegram API session
+  only after lifecycle cleanup.
+- Cancelling `run_async()` preserves the caller-visible
+  `asyncio.CancelledError` after lifecycle cleanup. Handler cancellation during
+  shutdown is treated as lifecycle control rather than user-facing failure.
+
+### Documentation / Packaging
+
+- Added the lifecycle ownership, shutdown, cancellation, and task-failure
+  contract to the project documentation.
+- Aligned keyboard, `on_offset`, error-handler, error-logging, and
+  `bot.include()` documentation with the implemented behavior.
+- Declared the custom WASL license in package metadata and added its SPDX
+  identifier to `LICENSE`.
+
+### Tests / Internal Changes
+
+- Centralized polling task ownership in the internal `LifecycleRegistry`.
+- Expanded coverage for lifecycle gates, direct polling tasks, bounded
+  shutdown, task-failure observation, keyboard validation, `on_offset`
+  validation, error-handler replacement, and `bot.include()` preflight.
+- Cold-import inspector coverage now restores the original `titan` modules
+  after the test.
+
 ## [1.0.0b1] - 2026-08-11
 
 ### Packaging
@@ -79,8 +130,6 @@ First public alpha release. The public API is stable and contract-frozen.
 
 ### Known Sharp Edges
 
-- Including a router can leave earlier event handlers registered if a later
-  command conflicts.
 - An empty `callback_data` registers successfully but is never matched.
 - The README documents additional safeguards that are intentionally not
   enforced automatically.

@@ -7,7 +7,7 @@ name = "titan-framework"
 authors = [
     {name = "Waheed"}
 ]
-version = "1.0.0b1"
+version = "1.0.0b2"
 description = "A simple and modern async framework for building Telegram bots"
 readme = "README.en.md"
 license = "LicenseRef-WASL-1.0"
